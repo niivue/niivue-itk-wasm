@@ -117,6 +117,7 @@ async function main() {
   const iwiData = iwi2nii(iwiAgain)
   // make file from Uint8Array
   const file = new File([new Blob([iwiData])], 'fslmean.nii', { type: 'application/octet-stream' })
+  // make some THICK lines since the image is so downsampled
   const lines = await niimath.image(file).dog(2, 3.2).run('fslmean.nii')
   // make File from lines Blob
   const linesFile = new File([lines], 'lines.nii', { type: 'application/octet-stream' })
