@@ -57,42 +57,43 @@ async function doDownsample(inFile) {
 }
 
 async function main() {
-  // await loadIWI('./fslmean.iwi.cbor')
-  // await loadIWM('./cow.iwm.cbor')
-  // await createIWI()
-  // await createIWM()
-
+  // loader for iwi files
   nv1.useLoader(
-    iwi2nii,
-    'iwi.cbor',
-    'nii'
+    iwi2nii, // loader function
+    'iwi.cbor', // file extension of the file to be parsed (e.g. a file niivue does not know about)
+    'nii' // file extension that the loader converts _to_ (must be a valid extension for Niivue)
   )
 
   // loader for iwm files
   nv1.useLoader(
-    iwm2mesh,
-    'iwm.cbor',
-    'mz3'
+    iwm2mesh, // loader function
+    'iwm.cbor', // file extension of the file to be parsed (e.g. a file niivue does not know about)
+    'mz3' // file extension that the loader converts _to_ (the only one supported at the moment)
   )
 
   await nv1.loadImages([
+    // note that niivue does not know how to load these files, 
+    // but the loaders we registered above will handle them and return data
+    // that niivue can use
     { url: './fslmean.iwi.cbor', name: 'fslmean.iwi.cbor' },
     { url: './cow.iwm.cbor', name: 'cow.iwm.cbor' }
   ])
 
-  // do downsample, but get ITK Image from niivue to show interoperability
-  const volume = nv1.volumes[0]
-  console.log(volume)
+  // do downsample, but get ITK Image from niivue to show interoperability.
+  // We get the hdr and img from the volume that was loaded from the iwi file.
+  // We then convert that data back to an ITK Image and downsample it using ITK's WASM
+  // outside of niivue. 
   const hdr = nv1.volumes[0].hdr
   const img = nv1.volumes[0].img
-  console.log('hdr')
-  console.log(hdr)
-  console.log(hdr.dims)
-  console.log('img')
-  console.log(img)
 
+  // convert the hdr and img (basically nifti data) to an ITK Image.
+  // Remember that this image data was ORIGINALLY an ITK Image that was converted to nifti
+  // so it could be loaded in niivue. But let's go back to ITK Image so we can use it with ITK.
   const iwi = nii2iwi(hdr, img, false)
 
+  // downsample the ITK Image using the ITK WASM module.
+  // This function will then convert the downsampled image back to nifti format
+  // so it can be loaded in niivue.
   await doDownsample(iwi)
 
 }
