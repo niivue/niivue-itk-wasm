@@ -11,6 +11,8 @@ import {
 import {
   downsampleBinShrink,
 } from "@itk-wasm/downsample"
+import { Niimath } from "@niivue/niimath"
+
 sliceDrop.onchange = function () {
   let st = parseInt(this.value)
   nv1.setSliceType(st)
@@ -33,6 +35,18 @@ let defaults = {
 }
 var nv1 = new Niivue(defaults)
 nv1.attachToCanvas(gl1)
+
+async function loadBinaryFile(url) {
+  try {
+      const response = await fetch(url)
+      if (!response.ok) {
+          throw new Error(`Failed to load file: ${response.statusText}`)
+      }
+      return await response.arrayBuffer()
+  } catch (error) {
+      console.error('Error loading binary file:', error)
+  }
+}
 
 async function doDownsample(inFile) {
   // bigint -> number is necessary for serialization because the object is serialized to JSON
@@ -57,6 +71,8 @@ async function doDownsample(inFile) {
 }
 
 async function main() {
+  const niimath = new Niimath()
+  await niimath.init()
   // loader for iwi files
   nv1.useLoader(
     iwi2nii, // loader function
@@ -95,6 +111,18 @@ async function main() {
   // This function will then convert the downsampled image back to nifti format
   // so it can be loaded in niivue.
   await doDownsample(iwi)
+
+  // just for fun, load the fslmean.iwi.cbor file and use it with niimath
+  const iwiAgain = await loadBinaryFile('./fslmean.iwi.cbor')
+  const iwiData = iwi2nii(iwiAgain)
+  // make file from Uint8Array
+  const file = new File([new Blob([iwiData])], 'fslmean.nii', { type: 'application/octet-stream' })
+  const lines = await niimath.image(file).dog(2, 3.2).run('fslmean.nii')
+  // make File from lines Blob
+  const linesFile = new File([lines], 'lines.nii', { type: 'application/octet-stream' })
+  await nv1.loadFromFile(linesFile)
+  nv1.setColormap(nv1.volumes[1].id, 'red')
+  nv1.setOpacity(1, 0.5)
 
 }
 main()
