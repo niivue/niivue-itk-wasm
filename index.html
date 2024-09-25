@@ -7,7 +7,7 @@
     <title>NiiVue ITK WASM demo</title>
     <link rel="stylesheet" href="niivue.css" />
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
-    <script type="module" crossorigin src="./assets/index-DdL3niT_.js"></script>
+    <script type="module" crossorigin src="./assets/index-BxMFEdDI.js"></script>
   </head>
   <body>
     <noscript>
@@ -21,9 +21,12 @@
         <option value="4">Render</option>
         <option value="3" selected>A+C+S+R</option>
       </select>
+      <select id="wasmDrop">
+        <option value="0">Downsample (ITK)</option>
+        <option value="1">Lines (niimath)</option>
+        <option value="2">Downsample then Lines (ITK + niimath)</option>
+      </select>
       <button id="saveBtn">save volume</button>
-      <!-- button to save mesh -->
-      <button id="saveMeshBtn">save mesh</button>
     </header>
     <main id="canvas-container">
       <canvas id="gl1"></canvas>
